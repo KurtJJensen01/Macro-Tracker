@@ -2,6 +2,9 @@
 {% block content %}
 <h2>Macro Settings</h2>
 
+<!-- Display the latest weight if available -->
+<p>Latest Weight: {{ macros.weight if macros.weight else "Not found" }} lbs</p>
+
 <form method="POST">
     <label>TDEE:</label><br>
     <input type="number" name="tdee" required><br><br>

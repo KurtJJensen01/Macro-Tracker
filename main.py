@@ -27,23 +27,15 @@ def index():
 
 @app.route("/food")
 def food_log():
+    # TODO: Replace base.html with your actual food logging template
     return render_template("base.html", title="Food Log")
 
 
 @app.route("/weight")
 def weight_log():
+    # TODO: Replace base.html with your actual weight logging template
     return render_template("base.html", title="Weight Log")
 
-
-@app.route("/settings")
-def settings():
-    return render_template("base.html", title="Settings")
-
-
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=3000)
-
-from flask import jsonify
 
 # Macro multipliers based on goal
 PROTEIN_MULTIPLIERS = {
@@ -64,17 +56,24 @@ FAT_MULTIPLIERS = {
     "Aggressive Bulk": 0.35
 }
 
+
 def get_latest_weight():
     with sqlite3.connect(DB_NAME) as conn:
         cur = conn.cursor()
         cur.execute("""
             SELECT weight FROM weight_logs
-            WHERE date = (SELECT MAX(date) FROM weight_logs)
-            ORDER BY time_of_day = 'morning' DESC, time_of_day = 'night' DESC
+            ORDER BY date DESC, 
+                     CASE time_of_day 
+                         WHEN 'morning' THEN 1 
+                         WHEN 'night' THEN 0 
+                         ELSE 2 
+                     END
             LIMIT 1
         """)
         row = cur.fetchone()
         return row[0] if row else None
+
+
 
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
@@ -101,18 +100,34 @@ def settings():
         if row:
             tdee, goal = row
 
-    # Calculate macros if possible
+    # Always include latest weight if it exists
+    if latest_weight:
+        macros["weight"] = latest_weight
+
+    # Then calculate macros if we also have tdee and goal
     if tdee and goal and latest_weight:
         protein = round(latest_weight * PROTEIN_MULTIPLIERS[goal])
         fat = round(latest_weight * FAT_MULTIPLIERS[goal])
         carbs = round((int(tdee) - (protein * 4 + fat * 9)) / 4)
-        macros = {
+        macros.update({
             "protein": protein,
             "fat": fat,
             "carbs": carbs,
             "tdee": tdee,
-            "goal": goal,
-            "weight": latest_weight
-        }
+            "goal": goal
+        })
+
 
     return render_template("settings.html", title="Settings", macros=macros)
+
+@app.route("/debug-weight-logs")
+def debug_weight_logs():
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT date, time_of_day, weight FROM weight_logs ORDER BY date DESC")
+        rows = cur.fetchall()
+    return "<br>".join([f"{date} | {time} | {weight} lbs" for date, time, weight in rows])
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=3000)
