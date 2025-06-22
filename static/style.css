@@ -12,6 +12,11 @@ body {
   color: #222;
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
+  /* Prevent horizontal scrolling on mobile */
+  overflow-x: hidden;
+  /* Improve text rendering on mobile */
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -130,11 +135,36 @@ table td:nth-child(4) {
   text-align: center; /* center delete button */
 }
 
-/* On very small screens, stack action button below text */
+/* On very small screens, make table more responsive */
 @media (max-width: 400px) {
   table th:nth-child(4),
   table td:nth-child(4) {
-    width: 100%;
+    width: 15%;
+    text-align: center;
+  }
+
+  /* Allow horizontal scrolling for tables on tiny screens */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Reduce padding further on very small screens */
+  th, td {
+    padding: 6px 4px;
+    font-size: 11px;
+  }
+  
+  /* Stack form elements better */
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  form input,
+  form select,
+  form button {
+    margin-bottom: 8px;
   }
 }
 
@@ -161,8 +191,11 @@ select {
   margin-bottom: 12px;
   border: 1px solid #ccc;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 16px; /* Prevents zoom on iOS */
   transition: border-color 0.2s ease;
+  /* Improve mobile input handling */
+  -webkit-appearance: none;
+  min-height: 44px; /* Ensure touch target size */
 }
 
 input[type="text"]:focus,
@@ -183,6 +216,11 @@ button {
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  /* Ensure minimum touch target size for mobile */
+  min-height: 44px;
+  min-width: 44px;
+  /* Prevent zoom on focus for iOS */
+  -webkit-appearance: none;
 }
 
 button:hover,
@@ -218,11 +256,13 @@ form button[type="submit"] {
   #darkModeToggle {
     align-self: flex-end;
     margin-top: 6px;
+    min-width: 44px;
+    min-height: 44px;
   }
 
   th, td {
     font-size: 12px;
-    padding: 8px 10px;
+    padding: 8px 6px;
   }
 
   input[type="text"],
@@ -230,7 +270,28 @@ form button[type="submit"] {
   input[type="date"],
   select,
   button {
-    font-size: 14px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Stack macros inputs vertically on very small screens */
+  .macros-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .macro-input {
+    flex: none;
+  }
+
+  /* Make table more mobile-friendly */
+  table {
+    font-size: 0.8rem;
+  }
+  
+  /* Ensure forms don't overflow */
+  form {
+    width: 100%;
+    overflow-x: hidden;
   }
 }
 
