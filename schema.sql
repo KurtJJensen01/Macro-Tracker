@@ -1,4 +1,4 @@
--- Create TDEE and goal settings
+-- TDEE and goal settings
 CREATE TABLE IF NOT EXISTS tdee_settings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     tdee INTEGER,
@@ -14,11 +14,11 @@ CREATE TABLE IF NOT EXISTS weight_logs (
     weight REAL
 );
 
--- Saved food items
+-- Saved foods (for reuse/autofill)
 CREATE TABLE IF NOT EXISTS saved_foods (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE,
-    calories INTEGER,
+    name TEXT UNIQUE NOT NULL,
+    calories REAL NOT NULL,
     protein REAL,
     carbs REAL,
     fat REAL
@@ -27,13 +27,11 @@ CREATE TABLE IF NOT EXISTS saved_foods (
 -- Food logs
 CREATE TABLE IF NOT EXISTS food_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    date TEXT,
-    food_id INTEGER,
-    custom_name TEXT,
-    calories INTEGER,
+    name TEXT NOT NULL,
+    calories REAL NOT NULL,
     protein REAL,
     carbs REAL,
     fat REAL,
-    timestamp TEXT,
-    FOREIGN KEY (food_id) REFERENCES saved_foods(id)
+    date TEXT NOT NULL,
+    timestamp TEXT DEFAULT CURRENT_TIMESTAMP
 );
