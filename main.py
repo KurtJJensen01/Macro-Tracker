@@ -25,16 +25,100 @@ def index():
     return redirect(url_for("food_log"))
 
 
-@app.route("/food")
+@app.route("/food", methods=["GET", "POST"])
 def food_log():
-    # TODO: Replace base.html with your actual food logging template
-    return render_template("base.html", title="Food Log")
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    # Handle new food submission
+    if request.method == "POST":
+        name = request.form["name"].strip()
+        calories = float(request.form["calories"])
+        protein = float(request.form.get("protein", 0))
+        carbs = float(request.form.get("carbs", 0))
+        fat = float(request.form.get("fat", 0))
+
+        with sqlite3.connect(DB_NAME) as conn:
+            cur = conn.cursor()
+
+            # Add to saved_foods if it's not already there
+            cur.execute("INSERT OR IGNORE INTO saved_foods (name, calories, protein, carbs, fat) VALUES (?, ?, ?, ?, ?)",
+                        (name, calories, protein, carbs, fat))
+
+            # Add to food_logs
+            cur.execute("INSERT INTO food_logs (name, calories, protein, carbs, fat, date) VALUES (?, ?, ?, ?, ?, ?)",
+                        (name, calories, protein, carbs, fat, today))
+            conn.commit()
+
+        return redirect(url_for("food_log"))
+
+    # Fetch today's food logs
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT id, name, calories, protein, carbs, fat FROM food_logs WHERE date = ?", (today,))
+        food_entries = cur.fetchall()
+
+    # Calculate totals
+    totals = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}
+    for entry in food_entries:
+        totals["calories"] += entry[2]
+        totals["protein"] += entry[3]
+        totals["carbs"] += entry[4]
+        totals["fat"] += entry[5]
+
+    return render_template("food.html", title="Food Log", entries=food_entries, totals=totals)
 
 
 @app.route("/weight")
 def weight_log():
     # TODO: Replace base.html with your actual weight logging template
     return render_template("base.html", title="Weight Log")
+
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    macros = {}
+    latest_weight = get_latest_weight()
+    tdee = goal = None
+
+    if request.method == "POST":
+        tdee = int(request.form["tdee"])
+        goal = request.form["goal"]
+        now = datetime.now()
+
+        with sqlite3.connect(DB_NAME) as conn:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM tdee_settings")
+            cur.execute("INSERT INTO tdee_settings (tdee, goal, last_updated) VALUES (?, ?, ?)", (tdee, goal, now))
+            conn.commit()
+
+    # Load saved settings
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT tdee, goal FROM tdee_settings ORDER BY last_updated DESC LIMIT 1")
+        row = cur.fetchone()
+        if row:
+            tdee, goal = row
+
+    
+    # Always include latest weight if it exists
+    if latest_weight:
+        macros["weight"] = latest_weight
+
+    # Then calculate macros if we also have tdee and goal
+    if tdee and goal and latest_weight:
+        protein = round(latest_weight * PROTEIN_MULTIPLIERS[goal])
+        fat = round(latest_weight * FAT_MULTIPLIERS[goal])
+        carbs = round((int(tdee) - (protein * 4 + fat * 9)) / 4)
+        macros.update({
+            "protein": protein,
+            "fat": fat,
+            "carbs": carbs,
+            "tdee": tdee,
+            "goal": goal
+        })
+
+
+    return render_template("settings.html", title="Settings", macros=macros)
 
 
 # Macro multipliers based on goal
@@ -73,60 +157,6 @@ def get_latest_weight():
         row = cur.fetchone()
         return row[0] if row else None
 
-
-
-@app.route("/settings", methods=["GET", "POST"])
-def settings():
-    macros = {}
-    latest_weight = get_latest_weight()
-    tdee = goal = None
-
-    if request.method == "POST":
-        tdee = int(request.form["tdee"])
-        goal = request.form["goal"]
-        now = datetime.now()
-
-        with sqlite3.connect(DB_NAME) as conn:
-            cur = conn.cursor()
-            cur.execute("DELETE FROM tdee_settings")
-            cur.execute("INSERT INTO tdee_settings (tdee, goal, last_updated) VALUES (?, ?, ?)", (tdee, goal, now))
-            conn.commit()
-
-    # Load saved settings
-    with sqlite3.connect(DB_NAME) as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT tdee, goal FROM tdee_settings ORDER BY last_updated DESC LIMIT 1")
-        row = cur.fetchone()
-        if row:
-            tdee, goal = row
-
-    # Always include latest weight if it exists
-    if latest_weight:
-        macros["weight"] = latest_weight
-
-    # Then calculate macros if we also have tdee and goal
-    if tdee and goal and latest_weight:
-        protein = round(latest_weight * PROTEIN_MULTIPLIERS[goal])
-        fat = round(latest_weight * FAT_MULTIPLIERS[goal])
-        carbs = round((int(tdee) - (protein * 4 + fat * 9)) / 4)
-        macros.update({
-            "protein": protein,
-            "fat": fat,
-            "carbs": carbs,
-            "tdee": tdee,
-            "goal": goal
-        })
-
-
-    return render_template("settings.html", title="Settings", macros=macros)
-
-@app.route("/debug-weight-logs")
-def debug_weight_logs():
-    with sqlite3.connect(DB_NAME) as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT date, time_of_day, weight FROM weight_logs ORDER BY date DESC")
-        rows = cur.fetchall()
-    return "<br>".join([f"{date} | {time} | {weight} lbs" for date, time, weight in rows])
 
 
 if __name__ == "__main__":

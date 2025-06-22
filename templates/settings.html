@@ -3,7 +3,7 @@
 <h2>Macro Settings</h2>
 
 <!-- Display the latest weight if available -->
-<p>Latest Weight: {{ macros.weight if macros.weight else "Not found" }} lbs</p>
+<p>Latest Weight: {% if macros.weight %}{{ macros.weight }} lbs{% else %}Not found{% endif %}</p>
 
 <form method="POST">
     <label>TDEE:</label><br>
