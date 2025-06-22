@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Weight Log</h2>
+
+<!-- Weight Entry Form -->
+<form method="POST" action="{{ url_for('weight_log') }}">
+    <label>Date:</label>
+    <input type="date" name="date" value="{{ datetime.utcnow().strftime('%Y-%m-%d') }}" required />
+
+    <label>Time of Day:</label>
+    <select name="time_of_day" required>
+        <option value="">Select</option>
+        <option value="morning">Morning</option>
+        <option value="night">Night</option>
+    </select>
+
+    <label>Weight (lbs):</label>
+    <input type="number" step="0.1" name="weight" required />
+
+    <button type="submit">Add Weight</button>
+</form>
+
+<!-- Tabs -->
+<div>
+    <button id="morningTabBtn">Morning</button>
+    <button id="nightTabBtn">Night</button>
+</div>
+
+<!-- Morning Tab Content -->
+<div id="morningTab" class="tabContent">
+    <h3>Morning Weight Log</h3>
+    <canvas id="morningChart"></canvas>
+
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr><th>Date</th><th>Weight (lbs)</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+            {% for entry in morning_weights %}
+            <tr>
+                <td>{{ entry[1] }}</td>
+                <td>{{ entry[2] }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('delete_weight', id=entry[0]) }}" onsubmit="return confirm('Delete this entry?');">
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Night Tab Content -->
+<div id="nightTab" class="tabContent" style="display:none;">
+    <h3>Night Weight Log</h3>
+    <canvas id="nightChart"></canvas>
+
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr><th>Date</th><th>Weight (lbs)</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+            {% for entry in night_weights %}
+            <tr>
+                <td>{{ entry[1] }}</td>
+                <td>{{ entry[2] }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('delete_weight', id=entry[0]) }}" onsubmit="return confirm('Delete this entry?');">
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Tab switching logic
+    const morningTabBtn = document.getElementById("morningTabBtn");
+    const nightTabBtn = document.getElementById("nightTabBtn");
+    const morningTab = document.getElementById("morningTab");
+    const nightTab = document.getElementById("nightTab");
+
+    morningTabBtn.onclick = () => {
+        morningTab.style.display = "block";
+        nightTab.style.display = "none";
+    };
+    nightTabBtn.onclick = () => {
+        morningTab.style.display = "none";
+        nightTab.style.display = "block";
+    };
+
+    // Prepare data for Chart.js
+    const morningData = {
+        labels: [{% for entry in morning_weights %}'{{ entry[1] }}',{% endfor %}],
+        datasets: [{
+            label: 'Morning Weight (lbs)',
+            data: [{% for entry in morning_weights %}{{ entry[2] }},{% endfor %}],
+            borderColor: 'rgba(75, 192, 192, 1)',
+            tension: 0.3,
+            fill: false,
+        }]
+    };
+
+    const nightData = {
+        labels: [{% for entry in night_weights %}'{{ entry[1] }}',{% endfor %}],
+        datasets: [{
+            label: 'Night Weight (lbs)',
+            data: [{% for entry in night_weights %}{{ entry[2] }},{% endfor %}],
+            borderColor: 'rgba(192, 75, 192, 1)',
+            tension: 0.3,
+            fill: false,
+        }]
+    };
+
+    // Chart options
+    const options = {
+        scales: {
+            y: {
+                beginAtZero: false,
+                suggestedMin: 100,
+                suggestedMax: 250
+            }
+        }
+    };
+
+    // Render charts
+    const morningCtx = document.getElementById('morningChart').getContext('2d');
+    const morningChart = new Chart(morningCtx, {
+        type: 'line',
+        data: morningData,
+        options: options
+    });
+
+    const nightCtx = document.getElementById('nightChart').getContext('2d');
+    const nightChart = new Chart(nightCtx, {
+        type: 'line',
+        data: nightData,
+        options: options
+    });
+</script>
+
+{% endblock %}

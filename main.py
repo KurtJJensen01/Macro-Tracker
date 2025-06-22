@@ -105,6 +105,7 @@ def weight_log():
         title="Weight Log",
         morning_weights=morning_weights,
         night_weights=night_weights,
+        datetime=datetime
     )
 
 
