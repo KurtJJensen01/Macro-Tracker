@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, Response
 import sqlite3
 import os
 from datetime import datetime
+import csv
 
 app = Flask(__name__)
 DB_NAME = "tracker.db"
@@ -27,20 +28,32 @@ def index():
 
     from datetime import datetime
 
+
 @app.route("/food", methods=["GET", "POST"])
 def food_log():
     # Get selected date from query params or default to today
     selected_date = request.args.get("date", datetime.now().strftime("%Y-%m-%d"))
 
     if request.method == "POST":
-        # Your existing POST handling code here (adding food entries)
-        # Make sure to use selected_date instead of hardcoded today
-
         name = request.form["name"].strip()
-        calories = float(request.form["calories"])
-        protein = float(request.form.get("protein", 0))
-        carbs = float(request.form.get("carbs", 0))
-        fat = float(request.form.get("fat", 0))
+        try:
+            calories = float(request.form["calories"])
+            protein = float(request.form.get("protein", 0))
+            carbs = float(request.form.get("carbs", 0))
+            fat = float(request.form.get("fat", 0))
+        except ValueError:
+            flash("Please enter valid numbers for calories and macros.", "error")
+            return redirect(url_for("food_log", date=selected_date))
+
+        if not name:
+            flash("Food name is required.", "error")
+            return redirect(url_for("food_log", date=selected_date))
+        if calories <= 0:
+            flash("Calories must be a positive number.", "error")
+            return redirect(url_for("food_log", date=selected_date))
+        if protein < 0 or carbs < 0 or fat < 0:
+            flash("Macros cannot be negative.", "error")
+            return redirect(url_for("food_log", date=selected_date))
 
         with sqlite3.connect(DB_NAME) as conn:
             cur = conn.cursor()
@@ -59,11 +72,9 @@ def food_log():
         cur.execute("SELECT id, name, calories, protein, carbs, fat FROM food_logs WHERE date = ?", (selected_date,))
         food_entries = cur.fetchall()
 
-        # Also fetch saved foods and macro targets if you have them
+        # Also fetch saved foods
         cur.execute("SELECT * FROM saved_foods")
         saved_foods = cur.fetchall()
-
-        # Fetch macro targets logic here (optional)
 
     # Calculate totals
     totals = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}
@@ -74,8 +85,9 @@ def food_log():
         totals["fat"] += entry[5]
 
     now_date = datetime.now().strftime("%Y-%m-%d")
-    
+
     return render_template("food.html", title="Food Log", entries=food_entries, totals=totals, saved_foods=saved_foods, selected_date=selected_date, now_date=now_date)
+
 
 
 @app.route("/food/delete/<int:food_id>", methods=["POST"])
@@ -261,6 +273,49 @@ def get_latest_weight():
         row = cur.fetchone()
         return row[0] if row else None
 
+
+def generate_csv(data, headers):
+    def generate():
+        yield ",".join(headers) + "\n"
+        for row in data:
+            yield ",".join(str(item) for item in row) + "\n"
+    return generate
+
+@app.route('/export/food_logs')
+def export_food_logs():
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT date, name, calories, protein, carbs, fat FROM food_logs ORDER BY date DESC")
+        data = cur.fetchall()
+
+    headers = ["Date", "Name", "Calories", "Protein", "Carbs", "Fat"]
+    csv_generator = generate_csv(data, headers)
+    return Response(csv_generator(), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment;filename=food_logs.csv"})
+
+@app.route('/export/weight_logs')
+def export_weight_logs():
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT date, time_of_day, weight FROM weight_logs ORDER BY date DESC")
+        data = cur.fetchall()
+
+    headers = ["Date", "Time of Day", "Weight"]
+    csv_generator = generate_csv(data, headers)
+    return Response(csv_generator(), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment;filename=weight_logs.csv"})
+
+@app.route('/export/saved_foods')
+def export_saved_foods():
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT name, calories, protein, carbs, fat FROM saved_foods ORDER BY name")
+        data = cur.fetchall()
+
+    headers = ["Name", "Calories", "Protein", "Carbs", "Fat"]
+    csv_generator = generate_csv(data, headers)
+    return Response(csv_generator(), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment;filename=saved_foods.csv"})
 
 
 if __name__ == "__main__":

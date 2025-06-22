@@ -1,5 +1,194 @@
-body {
-    font-family: sans-serif;
-    padding: 20px;
-    background-color: #fdfdfd;
+/* === Reset some defaults === */
+* {
+  box-sizing: border-box;
 }
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px 15px;
+  background-color: #fdfdfd;
+  color: #222;
+  line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+a {
+  color: #0366d6;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover, a:focus {
+  text-decoration: underline;
+  color: #024a9e;
+}
+
+/* Dark mode styles */
+body.dark-mode {
+  background-color: #121212;
+  color: #eee;
+}
+
+body.dark-mode a {
+  color: #8fcf6e;
+}
+
+body.dark-mode a:hover, body.dark-mode a:focus {
+  color: #b5f294;
+}
+
+/* === Navbar === */
+nav.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #ccc;
+}
+
+nav.navbar .nav-links {
+  display: flex;
+  gap: 1rem;
+}
+
+nav.navbar .nav-links a {
+  color: inherit;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+#darkModeToggle {
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  padding: 0;
+  color: inherit;
+  transition: color 0.3s ease;
+}
+
+#darkModeToggle:hover, #darkModeToggle:focus {
+  color: #8fcf6e;
+}
+
+/* === Table styles === */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  overflow-x: auto;
+  display: block;
+}
+
+th, td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.9rem;
+}
+
+th {
+  background-color: #f0f0f0;
+  font-weight: 600;
+}
+
+body.dark-mode th {
+  background-color: #1e1e1e;
+  border-bottom: 1px solid #333;
+}
+
+tr:hover {
+  background-color: #f5f5f5;
+}
+
+body.dark-mode tr:hover {
+  background-color: #2a2a2a;
+}
+
+/* === Form inputs and buttons === */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus {
+  border-color: #0366d6;
+  outline: none;
+}
+
+button {
+  padding: 12px 20px;
+  border-radius: 6px;
+  border: none;
+  background-color: #0366d6;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover,
+button:focus {
+  background-color: #024a9e;
+  outline: none;
+}
+
+/* Delete buttons inline */
+form button[type="submit"] {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+}
+
+/* === Responsive / Mobile === */
+@media (max-width: 480px) {
+  body {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  nav.navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  nav.navbar .nav-links {
+    gap: 0.75rem;
+    margin-bottom: 8px;
+  }
+
+  #darkModeToggle {
+    align-self: flex-end;
+    margin-top: 6px;
+  }
+
+  th, td {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  button {
+    font-size: 14px;
+  }
+}
+
+

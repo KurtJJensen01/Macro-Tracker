@@ -110,4 +110,32 @@
         document.getElementById('fat').value = data.fat;
     }
 </script>
+
+<script>
+document.getElementById('food-form').addEventListener('submit', function(e) {
+  const name = this.name.value.trim();
+  const calories = parseFloat(this.calories.value);
+  const protein = parseFloat(this.protein.value || 0);
+  const carbs = parseFloat(this.carbs.value || 0);
+  const fat = parseFloat(this.fat.value || 0);
+
+  if (!name) {
+    alert("Food name is required.");
+    e.preventDefault();
+    return;
+  }
+  if (isNaN(calories) || calories <= 0) {
+    alert("Calories must be a positive number.");
+    e.preventDefault();
+    return;
+  }
+  if (protein < 0 || carbs < 0 || fat < 0) {
+    alert("Macros cannot be negative.");
+    e.preventDefault();
+    return;
+  }
+});
+</script>
+
+
 {% endblock %}

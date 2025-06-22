@@ -1,18 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
     <title>{{ title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <nav>
-        <a href="/food">Food</a> |
-        <a href="/weight">Weight</a> |
-        <a href="/settings">Settings</a>
+    <script>
+      // Apply saved dark mode setting as early as possible after body exists
+      if (localStorage.getItem('darkMode') === 'enabled') {
+        document.body.classList.add('dark-mode');
+      }
+    </script>
+
+    <nav class="navbar">
+        <div class="nav-links">
+            <a href="/food">Food</a> |
+            <a href="/weight">Weight</a> |
+            <a href="/settings">Settings</a>
+        </div>
+        <button id="darkModeToggle">🌙</button>
     </nav>
+
+    <script>
+        const toggleBtn = document.getElementById('darkModeToggle');
+        const body = document.body;
+
+        // Set initial icon depending on mode on page load
+        toggleBtn.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙';
+
+        toggleBtn.addEventListener('click', () => {
+          body.classList.toggle('dark-mode');
+
+          if (body.classList.contains('dark-mode')) {
+            toggleBtn.textContent = '☀️';
+            localStorage.setItem('darkMode', 'enabled');
+          } else {
+            toggleBtn.textContent = '🌙';
+            localStorage.setItem('darkMode', 'disabled');
+          }
+        });
+    </script>
+
     <hr>
     <h1>{{ title }}</h1>
     {% block content %}{% endblock %}
 </body>
+<br>
+<foot>
+    <a href="{{ url_for('export_food_logs') }}">Export Food Logs CSV</a>
+    <a>|</a>
+    <a href="{{ url_for('export_weight_logs') }}">Export Weight Logs CSV</a>
+    <a>|</a>
+    <a href="{{ url_for('export_saved_foods') }}">Export Saved Foods CSV</a>
+</foot>
 </html>
