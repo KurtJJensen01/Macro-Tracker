@@ -100,8 +100,6 @@ def food_log():
     )
 
 
-
-
 @app.route("/food/delete/<int:food_id>", methods=["POST"])
 def delete_food(food_id):
     with sqlite3.connect(DB_NAME) as conn:
@@ -171,24 +169,51 @@ def weight_log():
             conn.commit()
         return redirect(url_for("weight_log"))
 
-    # Fetch morning and night weights separately for display
     with sqlite3.connect(DB_NAME) as conn:
+        conn.row_factory = sqlite3.Row
         cur = conn.cursor()
+
+        # Night weights & calories same date
         cur.execute(
-            "SELECT id, date, weight FROM weight_logs WHERE time_of_day = 'morning' ORDER BY date"
+            """
+            SELECT w.id, w.date, w.weight,
+                IFNULL(f.calories, 0) AS calories
+            FROM weight_logs w
+            LEFT JOIN food_logs f ON f.date = w.date
+            WHERE w.time_of_day = 'night'
+            ORDER BY w.date
+            """
+        )
+        night_weights = cur.fetchall()
+
+        # Morning weights & calories previous day
+        cur.execute(
+            """
+            SELECT w.id, w.date, w.weight,
+                IFNULL(f.calories, 0) AS calories
+            FROM weight_logs w
+            LEFT JOIN food_logs f ON f.date = DATE(w.date, '-1 day')
+            WHERE w.time_of_day = 'morning'
+            ORDER BY w.date
+            """
         )
         morning_weights = cur.fetchall()
 
-        cur.execute(
-            "SELECT id, date, weight FROM weight_logs WHERE time_of_day = 'night' ORDER BY date"
-        )
-        night_weights = cur.fetchall()
+    # Convert to dicts
+    morning_weights_list = [dict(row) for row in morning_weights]
+    night_weights_list = [dict(row) for row in night_weights]
+
+    # Create calories lookup by date
+    morning_calories = {row['date']: row['calories'] for row in morning_weights_list}
+    night_calories = {row['date']: row['calories'] for row in night_weights_list}
 
     return render_template(
         "weight.html",
         title="Weight Log",
-        morning_weights=morning_weights,
-        night_weights=night_weights,
+        morning_weights=morning_weights_list,
+        night_weights=night_weights_list,
+        morning_calories=morning_calories,
+        night_calories=night_calories,
         datetime=datetime
     )
 

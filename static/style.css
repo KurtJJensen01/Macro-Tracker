@@ -79,8 +79,8 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
-  display: table; /* changed from block */
-  table-layout: fixed; /* makes columns equal width */
+  display: table;       /* keep as table */
+  table-layout: fixed;  /* fixed layout for equal column widths */
 }
 
 th, td {
@@ -88,24 +88,55 @@ th, td {
   text-align: left;
   border-bottom: 1px solid #ddd;
   font-size: 0.9rem;
-  word-wrap: break-word; /* helps wrap content if long */
+  word-wrap: break-word;
 }
 
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  display: table;
+  table-layout: fixed;
+  font-size: 0.85rem; /* slightly smaller font */
+}
+
+th, td {
+  padding: 8px 10px;  /* reduce padding */
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  word-wrap: break-word;
+}
+
+/* Adjust column widths with tighter layout */
 table th:nth-child(1),
 table td:nth-child(1) {
-  width: 50%;
+  width: 35%; /* Date */
+  white-space: nowrap; /* keep date on one line */
 }
 
 table th:nth-child(2),
 table td:nth-child(2) {
-  width: 30%;
+  width: 20%; /* Weight */
 }
 
 table th:nth-child(3),
 table td:nth-child(3) {
-  width: 20%;
+  width: 25%; /* Calories */
 }
 
+table th:nth-child(4),
+table td:nth-child(4) {
+  width: 20%; /* Action */
+  text-align: center; /* center delete button */
+}
+
+/* On very small screens, stack action button below text */
+@media (max-width: 400px) {
+  table th:nth-child(4),
+  table td:nth-child(4) {
+    width: 100%;
+  }
+}
 
 body.dark-mode th {
   background-color: #1e1e1e;
