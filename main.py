@@ -31,7 +31,6 @@ def index():
 
 @app.route("/food", methods=["GET", "POST"])
 def food_log():
-    # Get selected date from query params or default to today
     selected_date = request.args.get("date", datetime.now().strftime("%Y-%m-%d"))
 
     if request.method == "POST":
@@ -63,20 +62,15 @@ def food_log():
                         (name, calories, protein, carbs, fat, selected_date))
             conn.commit()
 
-        # Redirect to same page but keep the date filter in URL
         return redirect(url_for("food_log", date=selected_date))
 
-    # Fetch food logs for the selected date
     with sqlite3.connect(DB_NAME) as conn:
         cur = conn.cursor()
         cur.execute("SELECT id, name, calories, protein, carbs, fat FROM food_logs WHERE date = ?", (selected_date,))
         food_entries = cur.fetchall()
-
-        # Also fetch saved foods
         cur.execute("SELECT * FROM saved_foods")
         saved_foods = cur.fetchall()
 
-    # Calculate totals
     totals = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}
     for entry in food_entries:
         totals["calories"] += entry[2]
@@ -86,7 +80,25 @@ def food_log():
 
     now_date = datetime.now().strftime("%Y-%m-%d")
 
-    return render_template("food.html", title="Food Log", entries=food_entries, totals=totals, saved_foods=saved_foods, selected_date=selected_date, now_date=now_date)
+    # Here is where you add your targets; adjust these as you want
+    macro_targets = {
+        "calories": 2500,
+        "protein": 180,
+        "carbs": 300,
+        "fat": 70,
+    }
+
+    return render_template(
+        "food.html",
+        title="Food Log",
+        entries=food_entries,
+        totals=totals,
+        saved_foods=saved_foods,
+        selected_date=selected_date,
+        now_date=now_date,
+        macro_targets=macro_targets,
+    )
+
 
 
 

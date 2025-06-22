@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Weight Log</h2>
 
 <!-- Weight Entry Form -->
 <form method="POST" action="{{ url_for('weight_log') }}">
@@ -19,6 +18,8 @@
 
     <button type="submit">Add Weight</button>
 </form>
+
+<br><hr><br>
 
 <!-- Tabs -->
 <div>
