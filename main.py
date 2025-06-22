@@ -27,7 +27,7 @@ def index():
 
 @app.route("/food", methods=["GET", "POST"])
 def food_log():
-    today = datetime.now().strftime("%Y-%m-%d")
+    selected_date = request.args.get("date", datetime.now().strftime("%Y-%m-%d"))
 
     # Handle new food submission
     if request.method == "POST":
@@ -54,8 +54,12 @@ def food_log():
     # Fetch today's food logs
     with sqlite3.connect(DB_NAME) as conn:
         cur = conn.cursor()
-        cur.execute("SELECT id, name, calories, protein, carbs, fat FROM food_logs WHERE date = ?", (today,))
+        cur.execute("SELECT id, name, calories, protein, carbs, fat FROM food_logs WHERE date = ?", (selected_date,))
         food_entries = cur.fetchall()
+
+        # STEP 1: Load saved foods for dropdown
+        cur.execute("SELECT name FROM saved_foods ORDER BY name ASC")
+        saved_foods = [row[0] for row in cur.fetchall()]
 
     # Calculate totals
     totals = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}
@@ -65,7 +69,60 @@ def food_log():
         totals["carbs"] += entry[4]
         totals["fat"] += entry[5]
 
-    return render_template("food.html", title="Food Log", entries=food_entries, totals=totals)
+
+    latest_weight = get_latest_weight()
+    macro_targets = {}
+
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT tdee, goal FROM tdee_settings ORDER BY last_updated DESC LIMIT 1")
+        row = cur.fetchone()
+        if row and latest_weight:
+            tdee, goal = row
+            protein = round(latest_weight * PROTEIN_MULTIPLIERS[goal])
+            fat = round(latest_weight * FAT_MULTIPLIERS[goal])
+            carbs = round((int(tdee) - (protein * 4 + fat * 9)) / 4)
+            macro_targets = {
+                "protein": protein,
+                "fat": fat,
+                "carbs": carbs,
+                "calories": tdee
+            }
+
+
+    return render_template("food.html", title="Food Log", entries=food_entries, totals=totals, saved_foods=saved_foods, macro_targets=macro_targets, selected_date=selected_date)
+
+
+@app.route("/food/delete/<int:food_id>", methods=["POST"])
+def delete_food(food_id):
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM food_logs WHERE id = ?", (food_id,))
+        conn.commit()
+    return redirect(url_for("food_log"))
+
+
+@app.route("/food/edit/<int:food_id>", methods=["GET", "POST"])
+def edit_food(food_id):
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        if request.method == "POST":
+            name = request.form["name"]
+            calories = float(request.form["calories"])
+            protein = float(request.form["protein"])
+            carbs = float(request.form["carbs"])
+            fat = float(request.form["fat"])
+            cur.execute("""
+                UPDATE food_logs 
+                SET name = ?, calories = ?, protein = ?, carbs = ?, fat = ? 
+                WHERE id = ?
+            """, (name, calories, protein, carbs, fat, food_id))
+            conn.commit()
+            return redirect(url_for("food_log"))
+        else:
+            cur.execute("SELECT name, calories, protein, carbs, fat FROM food_logs WHERE id = ?", (food_id,))
+            food = cur.fetchone()
+            return render_template("edit_food.html", food_id=food_id, food=food)
 
 
 @app.route("/weight", methods=["GET", "POST"])
