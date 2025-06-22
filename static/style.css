@@ -96,7 +96,7 @@ table {
   border-collapse: collapse;
   margin-top: 1rem;
   display: table;
-  table-layout: fixed;
+  table-layout: auto;
   font-size: 0.85rem; /* slightly smaller font */
 }
 
