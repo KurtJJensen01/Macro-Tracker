@@ -1,21 +1,64 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Food Log - Today</h2>
 
-<form method="POST">
-    <input type="text" name="name" placeholder="Food name" required>
-    <input type="number" name="calories" step="1" placeholder="Calories" required>
-    <input type="number" name="protein" step="0.1" placeholder="Protein (g)">
-    <input type="number" name="carbs" step="0.1" placeholder="Carbs (g)">
-    <input type="number" name="fat" step="0.1" placeholder="Fat (g)">
-    <button type="submit">Add Food</button>
+<form method="GET" action="{{ url_for('food_log') }}" id="dateForm">
+    <label for="date">Select Date:</label>
+    <input type="date" id="date" name="date" value="{{ selected_date }}" required>
+    <button type="button" id="todayBtn">Today</button>
+</form>
+
+<script>
+    const dateInput = document.getElementById('date');
+    const form = document.getElementById('dateForm');
+
+    // Submit form automatically when date changes
+    dateInput.addEventListener('change', function() {
+        form.submit();
+    });
+
+    // Today button logic remains the same
+    document.getElementById('todayBtn').addEventListener('click', function() {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+        form.submit();
+    });
+</script>
+
+
+<form method="POST" id="food-form">
+    <label for="saved-foods">Choose saved food (optional):</label>
+    <select id="saved-foods" onchange="fillMacros()">
+        <option value="">-- Select Saved Food --</option>
+        {% for food in saved_foods %}
+            <option value="{{ food[1] }}">{{ food[1] }}</option>  <!-- food[1] is the name -->
+        {% endfor %}
+    </select><br><br>
+
+    <label>Name:</label><br>
+    <input type="text" name="name" id="name" required><br><br>
+
+    <label>Calories:</label><br>
+    <input type="number" name="calories" id="calories" step="1" required><br><br>
+
+    <label>Protein (g):</label><br>
+    <input type="number" name="protein" id="protein" step="0.1"><br><br>
+
+    <label>Carbs (g):</label><br>
+    <input type="number" name="carbs" id="carbs" step="0.1"><br><br>
+
+    <label>Fat (g):</label><br>
+    <input type="number" name="fat" id="fat" step="0.1"><br><br>
+
+    <button type="submit">Log Food</button>
 </form>
 
 <hr>
 
-<h3>Today's Entries</h3>
-<table border="1">
-    <tr><th>Name</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr>
+<h3>Logged Foods</h3>
+<table>
+    <tr>
+        <th>Name</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>Actions</th>
+    </tr>
     {% for entry in entries %}
     <tr>
         <td>{{ entry[1] }}</td>
@@ -23,15 +66,48 @@
         <td>{{ entry[3] }}</td>
         <td>{{ entry[4] }}</td>
         <td>{{ entry[5] }}</td>
+        <td>
+            <a href="{{ url_for('edit_food', food_id=entry[0]) }}">Edit</a>
+            <form method="POST" action="{{ url_for('delete_food', food_id=entry[0]) }}" style="display:inline;">
+                <button type="submit" onclick="return confirm('Delete this entry?')">Delete</button>
+            </form>
+        </td>
     </tr>
     {% endfor %}
 </table>
 
-<h4>Totals for Today:</h4>
+
+<hr>
+
+<h3>Daily Totals</h3>
 <ul>
     <li>Calories: {{ totals.calories }}</li>
     <li>Protein: {{ totals.protein }}g</li>
     <li>Carbs: {{ totals.carbs }}g</li>
     <li>Fat: {{ totals.fat }}g</li>
 </ul>
+
+<script>
+    const savedFoods = {
+        {% for food in saved_foods %}
+        "{{ food }}": {},
+        {% endfor %}
+    };
+
+    // Fetch macros dynamically from backend
+    async function fillMacros() {
+        const selected = document.getElementById('saved-foods').value;
+        if (!selected) return;
+
+        const response = await fetch(`/api/saved-food/${encodeURIComponent(selected)}`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        document.getElementById('name').value = selected;
+        document.getElementById('calories').value = data.calories;
+        document.getElementById('protein').value = data.protein;
+        document.getElementById('carbs').value = data.carbs;
+        document.getElementById('fat').value = data.fat;
+    }
+</script>
 {% endblock %}

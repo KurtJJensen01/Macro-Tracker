@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Edit Food Entry</h2>
+
+<form method="POST">
+    <label>Name:</label><br>
+    <input type="text" name="name" value="{{ food.name }}" required><br><br>
+
+    <label>Calories:</label><br>
+    <input type="number" name="calories" value="{{ food.calories }}" step="1" required><br><br>
+
+    <label>Protein (g):</label><br>
+    <input type="number" name="protein" value="{{ food.protein }}" step="0.1"><br><br>
+
+    <label>Carbs (g):</label><br>
+    <input type="number" name="carbs" value="{{ food.carbs }}" step="0.1"><br><br>
+
+    <label>Fat (g):</label><br>
+    <input type="number" name="fat" value="{{ food.fat }}" step="0.1"><br><br>
+
+    <button type="submit">Update</button>
+    <a href="{{ url_for('food_log') }}">Cancel</a>
+</form>
+{% endblock %}

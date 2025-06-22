@@ -25,12 +25,17 @@ def index():
     return redirect(url_for("food_log"))
 
 
+    from datetime import datetime
+
 @app.route("/food", methods=["GET", "POST"])
 def food_log():
+    # Get selected date from query params or default to today
     selected_date = request.args.get("date", datetime.now().strftime("%Y-%m-%d"))
 
-    # Handle new food submission
     if request.method == "POST":
+        # Your existing POST handling code here (adding food entries)
+        # Make sure to use selected_date instead of hardcoded today
+
         name = request.form["name"].strip()
         calories = float(request.form["calories"])
         protein = float(request.form.get("protein", 0))
@@ -39,27 +44,26 @@ def food_log():
 
         with sqlite3.connect(DB_NAME) as conn:
             cur = conn.cursor()
-
-            # Add to saved_foods if it's not already there
             cur.execute("INSERT OR IGNORE INTO saved_foods (name, calories, protein, carbs, fat) VALUES (?, ?, ?, ?, ?)",
                         (name, calories, protein, carbs, fat))
-
-            # Add to food_logs
             cur.execute("INSERT INTO food_logs (name, calories, protein, carbs, fat, date) VALUES (?, ?, ?, ?, ?, ?)",
-                        (name, calories, protein, carbs, fat, today))
+                        (name, calories, protein, carbs, fat, selected_date))
             conn.commit()
 
-        return redirect(url_for("food_log"))
+        # Redirect to same page but keep the date filter in URL
+        return redirect(url_for("food_log", date=selected_date))
 
-    # Fetch today's food logs
+    # Fetch food logs for the selected date
     with sqlite3.connect(DB_NAME) as conn:
         cur = conn.cursor()
         cur.execute("SELECT id, name, calories, protein, carbs, fat FROM food_logs WHERE date = ?", (selected_date,))
         food_entries = cur.fetchall()
 
-        # STEP 1: Load saved foods for dropdown
-        cur.execute("SELECT name FROM saved_foods ORDER BY name ASC")
-        saved_foods = [row[0] for row in cur.fetchall()]
+        # Also fetch saved foods and macro targets if you have them
+        cur.execute("SELECT * FROM saved_foods")
+        saved_foods = cur.fetchall()
+
+        # Fetch macro targets logic here (optional)
 
     # Calculate totals
     totals = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}
@@ -69,28 +73,9 @@ def food_log():
         totals["carbs"] += entry[4]
         totals["fat"] += entry[5]
 
-
-    latest_weight = get_latest_weight()
-    macro_targets = {}
-
-    with sqlite3.connect(DB_NAME) as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT tdee, goal FROM tdee_settings ORDER BY last_updated DESC LIMIT 1")
-        row = cur.fetchone()
-        if row and latest_weight:
-            tdee, goal = row
-            protein = round(latest_weight * PROTEIN_MULTIPLIERS[goal])
-            fat = round(latest_weight * FAT_MULTIPLIERS[goal])
-            carbs = round((int(tdee) - (protein * 4 + fat * 9)) / 4)
-            macro_targets = {
-                "protein": protein,
-                "fat": fat,
-                "carbs": carbs,
-                "calories": tdee
-            }
-
-
-    return render_template("food.html", title="Food Log", entries=food_entries, totals=totals, saved_foods=saved_foods, macro_targets=macro_targets, selected_date=selected_date)
+    now_date = datetime.now().strftime("%Y-%m-%d")
+    
+    return render_template("food.html", title="Food Log", entries=food_entries, totals=totals, saved_foods=saved_foods, selected_date=selected_date, now_date=now_date)
 
 
 @app.route("/food/delete/<int:food_id>", methods=["POST"])
@@ -123,6 +108,24 @@ def edit_food(food_id):
             cur.execute("SELECT name, calories, protein, carbs, fat FROM food_logs WHERE id = ?", (food_id,))
             food = cur.fetchone()
             return render_template("edit_food.html", food_id=food_id, food=food)
+
+
+@app.route("/api/saved-food/<name>")
+def get_saved_food(name):
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT name, calories, protein, carbs, fat FROM saved_foods WHERE name = ?", (name,))
+        row = cur.fetchone()
+        if row:
+            return {
+                "name": row[0],
+                "calories": row[1],
+                "protein": row[2],
+                "carbs": row[3],
+                "fat": row[4]
+            }
+        else:
+            return {"error": "Food not found"}, 404
 
 
 @app.route("/weight", methods=["GET", "POST"])
@@ -173,7 +176,6 @@ def delete_weight(id):
         cur.execute("DELETE FROM weight_logs WHERE id = ?", (id,))
         conn.commit()
     return redirect(url_for("weight_log"))
-
 
 
 @app.route("/settings", methods=["GET", "POST"])
