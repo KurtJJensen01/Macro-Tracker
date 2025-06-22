@@ -9,9 +9,9 @@ CREATE TABLE IF NOT EXISTS tdee_settings (
 -- Weight logs
 CREATE TABLE IF NOT EXISTS weight_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    date TEXT,
-    time_of_day TEXT CHECK(time_of_day IN ('morning', 'night')),
-    weight REAL
+    date TEXT NOT NULL,
+    time_of_day TEXT NOT NULL CHECK(time_of_day IN ('morning', 'night')),
+    weight REAL NOT NULL
 );
 
 -- Saved foods (for reuse/autofill)
