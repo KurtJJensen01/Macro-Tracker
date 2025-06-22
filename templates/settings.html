@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Macro Settings</h2>
+
+<form method="POST">
+    <label>TDEE:</label><br>
+    <input type="number" name="tdee" required><br><br>
+
+    <label>Goal:</label><br>
+    <select name="goal" required>
+        <option value="">-- Select Goal --</option>
+        <option>Mild Cut</option>
+        <option>Moderate Cut</option>
+        <option>Aggressive Cut</option>
+        <option>Maintenance</option>
+        <option>Lean Bulk</option>
+        <option>Aggressive Bulk</option>
+    </select><br><br>
+
+    <button type="submit">Save Settings</button>
+</form>
+
+{% if macros %}
+<hr>
+<h3>Calculated Macros (based on {{ macros.weight }} lbs):</h3>
+<ul>
+    <li>Calories: {{ macros.tdee }}</li>
+    <li>Protein: {{ macros.protein }}g</li>
+    <li>Fat: {{ macros.fat }}g</li>
+    <li>Carbs: {{ macros.carbs }}g</li>
+</ul>
+{% elif macros == {} %}
+<p style="color: gray">Enter your TDEE and goal. You must also have a weight logged.</p>
+{% endif %}
+{% endblock %}
