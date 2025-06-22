@@ -6,7 +6,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <nav>
+        <a href="/food">Food</a> |
+        <a href="/weight">Weight</a> |
+        <a href="/settings">Settings</a>
+    </nav>
+    <hr>
     <h1>{{ title }}</h1>
-    <p>This is a placeholder page for: {{ title }}</p>
+    {% block content %}{% endblock %}
 </body>
 </html>
