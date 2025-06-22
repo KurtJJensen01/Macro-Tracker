@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
 import os
 from datetime import datetime
@@ -68,10 +68,54 @@ def food_log():
     return render_template("food.html", title="Food Log", entries=food_entries, totals=totals)
 
 
-@app.route("/weight")
+@app.route("/weight", methods=["GET", "POST"])
 def weight_log():
-    # TODO: Replace base.html with your actual weight logging template
-    return render_template("base.html", title="Weight Log")
+    if request.method == "POST":
+        date = request.form.get("date") or datetime.now().strftime("%Y-%m-%d")
+        time_of_day = request.form.get("time_of_day")
+        weight = request.form.get("weight")
+        if time_of_day not in ("morning", "night") or not weight:
+            return "Invalid input", 400
+        weight = float(weight)
+
+        with sqlite3.connect(DB_NAME) as conn:
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO weight_logs (date, time_of_day, weight) VALUES (?, ?, ?)",
+                (date, time_of_day, weight),
+            )
+            conn.commit()
+        return redirect(url_for("weight_log"))
+
+    # Fetch morning and night weights separately for display
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT id, date, weight FROM weight_logs WHERE time_of_day = 'morning' ORDER BY date"
+        )
+        morning_weights = cur.fetchall()
+
+        cur.execute(
+            "SELECT id, date, weight FROM weight_logs WHERE time_of_day = 'night' ORDER BY date"
+        )
+        night_weights = cur.fetchall()
+
+    return render_template(
+        "weight.html",
+        title="Weight Log",
+        morning_weights=morning_weights,
+        night_weights=night_weights,
+    )
+
+
+@app.route("/weight/delete/<int:id>", methods=["POST"])
+def delete_weight(id):
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM weight_logs WHERE id = ?", (id,))
+        conn.commit()
+    return redirect(url_for("weight_log"))
+
 
 
 @app.route("/settings", methods=["GET", "POST"])
