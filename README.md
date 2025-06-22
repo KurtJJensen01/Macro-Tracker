@@ -35,7 +35,8 @@ This app was custom-designed to help track my calorie and macro intake in a way 
 ```bash
 git clone https://github.com/yourusername/macro-tracker.git
 cd macro-tracker
-python3 -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
 python main.py
+```
+
+Visit `http://localhost:3000` to access the app.
