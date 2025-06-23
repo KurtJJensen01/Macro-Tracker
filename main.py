@@ -80,13 +80,8 @@ def food_log():
 
     now_date = datetime.now().strftime("%Y-%m-%d")
 
-    # Here is where you add your targets; adjust these as you want
-    macro_targets = {
-        "calories": 2500,
-        "protein": 180,
-        "carbs": 300,
-        "fat": 70,
-    }
+    # Get macro targets from TDEE settings or use defaults
+    macro_targets = get_macro_targets()
 
     return render_template(
         "food.html",
@@ -317,6 +312,38 @@ def get_latest_weight():
         """)
         row = cur.fetchone()
         return row[0] if row else None
+
+
+def get_macro_targets():
+    """Get macro targets from TDEE settings or return defaults"""
+    latest_weight = get_latest_weight()
+    
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT tdee, goal FROM tdee_settings ORDER BY last_updated DESC LIMIT 1")
+        row = cur.fetchone()
+    
+    # If we have all the data, calculate macros
+    if row and latest_weight:
+        tdee, goal = row
+        protein = round(latest_weight * PROTEIN_MULTIPLIERS[goal])
+        fat = round(latest_weight * FAT_MULTIPLIERS[goal])
+        carbs = round((int(tdee) - (protein * 4 + fat * 9)) / 4)
+        
+        return {
+            "calories": int(tdee),
+            "protein": protein,
+            "carbs": carbs,
+            "fat": fat,
+        }
+    
+    # Fallback to defaults if no settings or weight
+    return {
+        "calories": 2500,
+        "protein": 180,
+        "carbs": 300,
+        "fat": 70,
+    }
 
 
 def generate_csv(data, headers):
