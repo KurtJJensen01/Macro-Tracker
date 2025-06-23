@@ -44,6 +44,29 @@
             localStorage.setItem('darkMode', 'disabled');
           }
         });
+
+        // Prevent horizontal swiping on mobile
+        let startX = null;
+        document.addEventListener('touchstart', function(e) {
+          startX = e.touches[0].clientX;
+        }, { passive: false });
+
+        document.addEventListener('touchmove', function(e) {
+          if (startX !== null) {
+            let currentX = e.touches[0].clientX;
+            let diffX = Math.abs(currentX - startX);
+            let diffY = Math.abs(e.touches[0].clientY - (e.touches[1] ? e.touches[1].clientY : 0));
+            
+            // If horizontal swipe is detected, prevent it
+            if (diffX > diffY && diffX > 10) {
+              e.preventDefault();
+            }
+          }
+        }, { passive: false });
+
+        document.addEventListener('touchend', function() {
+          startX = null;
+        });
     </script>
 
     <hr>

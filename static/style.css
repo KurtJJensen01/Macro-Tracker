@@ -17,6 +17,9 @@ body {
   /* Improve text rendering on mobile */
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
+  /* Prevent swipe gestures on mobile */
+  touch-action: pan-y pinch-zoom;
+  overscroll-behavior-x: none;
 }
 
 a {
