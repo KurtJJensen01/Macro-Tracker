@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 {% block content %}
 
@@ -89,7 +90,24 @@
     </table>
 </div>
 
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Tab switching script -->
+<script>
+    // Tab switching functionality
+    document.getElementById('morningTabBtn').addEventListener('click', function() {
+        document.getElementById('morningTab').style.display = 'block';
+        document.getElementById('nightTab').style.display = 'none';
+    });
+
+    document.getElementById('nightTabBtn').addEventListener('click', function() {
+        document.getElementById('morningTab').style.display = 'none';
+        document.getElementById('nightTab').style.display = 'block';
+    });
+</script>
+
+<!-- Chart configuration script -->
 <script>
     // Prepare labels (just dates)
     const morningLabels = [{% for entry in morning_weights %}'{{ entry.date }}',{% endfor %}];
@@ -128,7 +146,7 @@
             fill: false,
             calories: nightCals,
             pointRadius: 5,
-            pointHoverRadius: 7,
+            pointHoverRadius: 7
         }]
     };
 
