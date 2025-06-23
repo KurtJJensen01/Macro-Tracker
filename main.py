@@ -177,9 +177,13 @@ def weight_log():
         cur.execute(
             """
             SELECT w.id, w.date, w.weight,
-                IFNULL(f.calories, 0) AS calories
+                IFNULL(f.total_calories, 0) AS calories
             FROM weight_logs w
-            LEFT JOIN food_logs f ON f.date = w.date
+            LEFT JOIN (
+                SELECT date, SUM(calories) AS total_calories
+                FROM food_logs
+                GROUP BY date
+            ) f ON f.date = w.date
             WHERE w.time_of_day = 'night'
             ORDER BY w.date
             """
@@ -190,9 +194,13 @@ def weight_log():
         cur.execute(
             """
             SELECT w.id, w.date, w.weight,
-                IFNULL(f.calories, 0) AS calories
+                IFNULL(f.total_calories, 0) AS calories
             FROM weight_logs w
-            LEFT JOIN food_logs f ON f.date = DATE(w.date, '-1 day')
+            LEFT JOIN (
+                SELECT date, SUM(calories) AS total_calories
+                FROM food_logs
+                GROUP BY date
+            ) f ON f.date = DATE(w.date, '-1 day')
             WHERE w.time_of_day = 'morning'
             ORDER BY w.date
             """
