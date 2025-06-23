@@ -78,12 +78,19 @@ nav.navbar .nav-links a {
 }
 
 /* === Table styles === */
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  margin-top: 1rem;
+}
+
 table {
   width: 100%;
+  min-width: 600px; /* Ensure table has minimum width to trigger horizontal scroll */
   border-collapse: collapse;
-  margin-top: 1rem;
-  display: table;       /* keep as table */
-  table-layout: fixed;  /* fixed layout for equal column widths */
+  display: table;
+  table-layout: auto;
 }
 
 th, td {
