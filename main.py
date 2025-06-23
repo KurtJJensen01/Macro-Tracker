@@ -297,6 +297,16 @@ FAT_MULTIPLIERS = {
 }
 
 
+FITNESS_GOAL = {
+    "Mild Cut": -350,
+    "Moderate Cut": -550,
+    "Aggressive Cut": -850,
+    "Maintenance": 0,
+    "Lean Bulk": 250,
+    "Aggressive Bulk": 550
+}
+
+
 def get_latest_weight():
     with sqlite3.connect(DB_NAME) as conn:
         cur = conn.cursor()
@@ -331,7 +341,7 @@ def get_macro_targets():
         carbs = round((int(tdee) - (protein * 4 + fat * 9)) / 4)
         
         return {
-            "calories": int(tdee),
+            "calories": int(tdee) + FITNESS_GOAL[goal],
             "protein": protein,
             "carbs": carbs,
             "fat": fat,
