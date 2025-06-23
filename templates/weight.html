@@ -33,30 +33,32 @@
     <h3>Morning Weight Log</h3>
     <canvas id="morningChart"></canvas>
 
-    <table border="1" cellpadding="5" cellspacing="0" style="width: 100%;">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Weight (lbs)</th>
-                <th>Calories Consumed</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for entry in morning_weights %}
-            <tr>
-                <td>{{ entry.date }}</td>
-                <td>{{ entry.weight }}</td>
-                <td>{{ morning_calories.get(entry.date, '-') }}</td>
-                <td>
-                    <form method="POST" action="{{ url_for('delete_weight', id=entry.id) }}" onsubmit="return confirm('Delete this entry?');">
-                        <button type="submit">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-container">
+        <table border="1" cellpadding="5" cellspacing="0" style="width: 100%;">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Weight (lbs)</th>
+                    <th>Calories Consumed</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in morning_weights %}
+                <tr>
+                    <td>{{ entry.date }}</td>
+                    <td>{{ entry.weight }}</td>
+                    <td>{{ morning_calories.get(entry.date, '-') }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('delete_weight', id=entry.id) }}" onsubmit="return confirm('Delete this entry?');">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Night Tab Content -->
@@ -64,30 +66,32 @@
     <h3>Night Weight Log</h3>
     <canvas id="nightChart"></canvas>
 
-    <table border="1" cellpadding="5" cellspacing="0" style="width: 100%;">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Weight (lbs)</th>
-                <th>Calories Consumed</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for entry in night_weights %}
-            <tr>
-                <td>{{ entry.date }}</td>
-                <td>{{ entry.weight }}</td>
-                <td>{{ night_calories.get(entry.date, '-') }}</td>
-                <td>
-                    <form method="POST" action="{{ url_for('delete_weight', id=entry.id) }}" onsubmit="return confirm('Delete this entry?');">
-                        <button type="submit">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-container">
+        <table border="1" cellpadding="5" cellspacing="0" style="width: 100%;">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Weight (lbs)</th>
+                    <th>Calories Consumed</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in night_weights %}
+                <tr>
+                    <td>{{ entry.date }}</td>
+                    <td>{{ entry.weight }}</td>
+                    <td>{{ night_calories.get(entry.date, '-') }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('delete_weight', id=entry.id) }}" onsubmit="return confirm('Delete this entry?');">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Chart.js -->
