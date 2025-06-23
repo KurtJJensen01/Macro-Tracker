@@ -146,28 +146,37 @@ table td:nth-child(4) {
     text-align: center;
   }
 
-  /* Allow horizontal scrolling for tables on tiny screens */
+  /* Prevent table overflow */
   .table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    max-width: 100%;
   }
-  
+
   /* Reduce padding further on very small screens */
   th, td {
     padding: 6px 4px;
     font-size: 11px;
   }
-  
+
   /* Stack form elements better */
   form {
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 100%;
   }
-  
+
   form input,
   form select,
   form button {
     margin-bottom: 8px;
+    max-width: 100%;
+  }
+
+  /* Ensure no element can overflow */
+  * {
+    max-width: 100% !important;
   }
 }
 
@@ -290,7 +299,7 @@ form button[type="submit"] {
   table {
     font-size: 0.8rem;
   }
-  
+
   /* Ensure forms don't overflow */
   form {
     width: 100%;
@@ -386,4 +395,3 @@ body.dark-mode .progress-fill {
   font-weight: 600;
   color: #666;
 }
-
