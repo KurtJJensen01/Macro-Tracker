@@ -5,21 +5,16 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  max-width: 600px;
-  margin: 0 auto;
+  margin: 0;
   padding: 20px 15px;
   background-color: #fdfdfd;
   color: #222;
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
-  /* Prevent horizontal scrolling on mobile */
-  overflow-x: hidden;
+  width: 100%;
   /* Improve text rendering on mobile */
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
-  /* Prevent swipe gestures on mobile */
-  touch-action: pan-y pinch-zoom;
-  overscroll-behavior-x: none;
 }
 
 a {
@@ -394,4 +389,8 @@ body.dark-mode .progress-fill {
   white-space: nowrap;
   font-weight: 600;
   color: #666;
+}
+html {
+  margin: 0;
+  padding: 0;
 }
