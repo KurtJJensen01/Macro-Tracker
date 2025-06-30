@@ -155,40 +155,40 @@
     };
 
     // Common options with custom tooltip
-    const options = {
-        scales: {
-            y: {
-                beginAtZero: false,
-                suggestedMin: 100,
-                suggestedMax: 250
-            }
-        },
-        plugins: {
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        const weight = context.parsed.y;
-                        // Calories from dataset calories array at the hovered index
-                        const cal = context.dataset.calories[context.dataIndex];
-                        return `Weight: ${weight} lbs, Calories: ${cal}`;
+    function getChartOptions(minY, maxY) {
+        return {
+            scales: {
+                y: {
+                    min: minY,
+                    max: maxY
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const weight = context.parsed.y;
+                            const cal = context.dataset.calories[context.dataIndex];
+                            return `Weight: ${weight} lbs, Calories: ${cal}`;
+                        }
                     }
                 }
             }
-        }
-    };
+        };
+    }
 
     const morningCtx = document.getElementById('morningChart').getContext('2d');
     const morningChart = new Chart(morningCtx, {
         type: 'line',
         data: morningData,
-        options: options
+        options: getChartOptions(150, 190)
     });
 
     const nightCtx = document.getElementById('nightChart').getContext('2d');
     const nightChart = new Chart(nightCtx, {
         type: 'line',
         data: nightData,
-        options: options
+        options: getChartOptions(150, 190)
     });
 </script>
 
