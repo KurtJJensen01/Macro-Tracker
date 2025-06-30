@@ -42,6 +42,24 @@ body.dark-mode a:hover, body.dark-mode a:focus {
   color: #b5f294;
 }
 
+/* Dark mode form inputs */
+body.dark-mode input[type="text"],
+body.dark-mode input[type="number"],
+body.dark-mode input[type="date"],
+body.dark-mode select {
+  background-color: #222;
+  color: #eee;
+  border: 1px solid #555;
+}
+
+body.dark-mode input[type="text"]:focus,
+body.dark-mode input[type="number"]:focus,
+body.dark-mode input[type="date"]:focus,
+body.dark-mode select:focus {
+  border-color: #8fcf6e;
+  outline: none;
+}
+
 /* === Navbar === */
 nav.navbar {
   display: flex;
@@ -309,7 +327,6 @@ form button[type="submit"] {
   }
 }
 
-
 /* Make numeric macro inputs smaller */
 input[name="calories"],
 input[name="protein"],
@@ -330,7 +347,6 @@ input[name="name"] {
   margin-bottom: 10px;
   box-sizing: border-box; /* to include padding in width */
 }
-
 
 /* Macros container flex row */
 .macros-row {
@@ -383,7 +399,6 @@ input[name="name"] {
   transition: width 0.3s ease-in-out;
 }
 
-
 body.dark-mode .progress-bar {
   background-color: #444;
 }
@@ -397,7 +412,55 @@ body.dark-mode .progress-fill {
   font-weight: 600;
   color: #666;
 }
+
 html {
   margin: 0;
   padding: 0;
+}
+
+/* Search input default (light mode) */
+#food-search {
+  background-color: white;
+  color: black;
+  border: 1px solid #ccc;
+}
+
+/* Suggestions dropdown default (light mode) */
+#suggestions {
+  background-color: white;
+  color: black;
+  border: 1px solid #ccc;
+  max-height: 300px;
+  overflow-y: auto;
+  position: absolute;
+  width: 100%;
+  z-index: 1000;
+  display: none; /* hidden by default */
+  box-sizing: border-box;
+  border-radius: 4px;
+}
+
+/* Hover effect on suggestions - light mode */
+#suggestions div:hover {
+  background-color: #ddd;
+  cursor: pointer;
+}
+
+/* Dark mode styles */
+body.dark-mode #food-search {
+  background-color: #222;
+  color: #eee;
+  border: 1px solid #555;
+}
+
+body.dark-mode #suggestions {
+  background-color: #222 !important;
+  color: #eee !important;
+  border: 1px solid #555 !important;
+}
+
+/* Hover effect on suggestions - dark mode */
+body.dark-mode #suggestions div:hover {
+  background-color: #444;
+  cursor: pointer;
 }

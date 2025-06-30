@@ -3,6 +3,7 @@ import sqlite3
 import os
 from datetime import datetime
 import csv
+from io import StringIO
 
 app = Flask(__name__)
 DB_NAME = "tracker.db"
@@ -68,8 +69,9 @@ def food_log():
         cur = conn.cursor()
         cur.execute("SELECT id, name, calories, protein, carbs, fat FROM food_logs WHERE date = ?", (selected_date,))
         food_entries = cur.fetchall()
-        cur.execute("SELECT * FROM saved_foods")
+        cur.execute("SELECT * FROM saved_foods ORDER BY name")
         saved_foods = cur.fetchall()
+
 
     totals = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}
     for entry in food_entries:
@@ -277,34 +279,75 @@ def settings():
     return render_template("settings.html", title="Settings", macros=macros)
 
 
-# Macro multipliers based on goal
-PROTEIN_MULTIPLIERS = {
-    "Mild Cut": 1.15,
-    "Moderate Cut": 1.25,
-    "Aggressive Cut": 1.4,
-    "Maintenance": 1.05,
-    "Lean Bulk": 0.95,
-    "Aggressive Bulk": 0.85
-}
+@app.route('/export/food_logs')
+def export_food_logs():
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT date, name, calories, protein, carbs, fat FROM food_logs ORDER BY date DESC")
+        data = cur.fetchall()
 
-FAT_MULTIPLIERS = {
-    "Mild Cut": 0.4,
-    "Moderate Cut": 0.35,
-    "Aggressive Cut": 0.3,
-    "Maintenance": 0.45,
-    "Lean Bulk": 0.45,
-    "Aggressive Bulk": 0.35
-}
+    headers = ["Date", "Name", "Calories", "Protein", "Carbs", "Fat"]
+    csv_generator = generate_csv(data, headers)
+    return Response(
+        csv_generator(),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment;filename=saved_foods.csv"}
+    )
 
 
-FITNESS_GOAL = {
-    "Mild Cut": -350,
-    "Moderate Cut": -550,
-    "Aggressive Cut": -850,
-    "Maintenance": 0,
-    "Lean Bulk": 250,
-    "Aggressive Bulk": 550
-}
+
+@app.route('/export/weight_logs')
+def export_weight_logs():
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT date, time_of_day, weight FROM weight_logs ORDER BY date DESC")
+        data = cur.fetchall()
+
+    headers = ["Date", "Time of Day", "Weight"]
+    csv_generator = generate_csv(data, headers)
+    return Response(
+        csv_generator(),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment;filename=saved_foods.csv"}
+    )
+
+
+
+@app.route('/export/saved_foods')
+def export_saved_foods():
+    with sqlite3.connect(DB_NAME) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT name, calories, protein, carbs, fat FROM saved_foods ORDER BY name")
+        data = cur.fetchall()
+
+    headers = ["Name", "Calories", "Protein", "Carbs", "Fat"]
+    csv_generator = generate_csv(data, headers)
+    return Response(
+        csv_generator(),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment;filename=saved_foods.csv"}
+    )
+
+
+
+@app.route("/api/saved-food-search")
+def saved_food_search():
+    query = request.args.get("q", "").strip().lower()
+
+    with sqlite3.connect(DB_NAME) as conn:
+        conn.row_factory = sqlite3.Row
+        if query:
+            results = conn.execute(
+                "SELECT name FROM saved_foods WHERE LOWER(name) LIKE ? ORDER BY name",
+                ('%' + query + '%',)
+            ).fetchall()
+        else:
+            # No limit when query is empty
+            results = conn.execute(
+                "SELECT name FROM saved_foods ORDER BY name"
+            ).fetchall()
+
+        return jsonify([{"name": row["name"]} for row in results])
 
 
 def get_latest_weight():
@@ -358,47 +401,53 @@ def get_macro_targets():
 
 def generate_csv(data, headers):
     def generate():
-        yield ",".join(headers) + "\n"
+        # Yield UTF-8 BOM first (helps Excel detect UTF-8)
+        yield '\ufeff'
+
+        output = StringIO()
+        writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+
+        writer.writerow(headers)
+        yield output.getvalue()
+        output.seek(0)
+        output.truncate(0)
+
         for row in data:
-            yield ",".join(str(item) for item in row) + "\n"
+            writer.writerow(row)
+            yield output.getvalue()
+            output.seek(0)
+            output.truncate(0)
     return generate
 
-@app.route('/export/food_logs')
-def export_food_logs():
-    with sqlite3.connect(DB_NAME) as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT date, name, calories, protein, carbs, fat FROM food_logs ORDER BY date DESC")
-        data = cur.fetchall()
 
-    headers = ["Date", "Name", "Calories", "Protein", "Carbs", "Fat"]
-    csv_generator = generate_csv(data, headers)
-    return Response(csv_generator(), mimetype="text/csv",
-                    headers={"Content-Disposition": "attachment;filename=food_logs.csv"})
 
-@app.route('/export/weight_logs')
-def export_weight_logs():
-    with sqlite3.connect(DB_NAME) as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT date, time_of_day, weight FROM weight_logs ORDER BY date DESC")
-        data = cur.fetchall()
+# Macro multipliers based on goal
+PROTEIN_MULTIPLIERS = {
+    "Mild Cut": 1.15,
+    "Moderate Cut": 1.25,
+    "Aggressive Cut": 1.4,
+    "Maintenance": 1.05,
+    "Lean Bulk": 0.95,
+    "Aggressive Bulk": 0.85
+}
 
-    headers = ["Date", "Time of Day", "Weight"]
-    csv_generator = generate_csv(data, headers)
-    return Response(csv_generator(), mimetype="text/csv",
-                    headers={"Content-Disposition": "attachment;filename=weight_logs.csv"})
+FAT_MULTIPLIERS = {
+    "Mild Cut": 0.4,
+    "Moderate Cut": 0.35,
+    "Aggressive Cut": 0.3,
+    "Maintenance": 0.45,
+    "Lean Bulk": 0.45,
+    "Aggressive Bulk": 0.35
+}
 
-@app.route('/export/saved_foods')
-def export_saved_foods():
-    with sqlite3.connect(DB_NAME) as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT name, calories, protein, carbs, fat FROM saved_foods ORDER BY name")
-        data = cur.fetchall()
-
-    headers = ["Name", "Calories", "Protein", "Carbs", "Fat"]
-    csv_generator = generate_csv(data, headers)
-    return Response(csv_generator(), mimetype="text/csv",
-                    headers={"Content-Disposition": "attachment;filename=saved_foods.csv"})
-
+FITNESS_GOAL = {
+    "Mild Cut": -350,
+    "Moderate Cut": -550,
+    "Aggressive Cut": -850,
+    "Maintenance": 0,
+    "Lean Bulk": 250,
+    "Aggressive Bulk": 550
+}
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=3000)

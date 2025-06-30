@@ -1,12 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
-
 <form method="GET" action="{{ url_for('food_log') }}" id="dateForm">
     <label for="date">Select Date:</label>
     <input type="date" id="date" name="date" value="{{ selected_date }}" required>
     <button type="button" id="todayBtn">Today</button>
 </form>
-
 <script>
     const dateInput = document.getElementById('date');
     const form = document.getElementById('dateForm');
@@ -21,44 +19,54 @@
         form.submit();
     });
 </script>
-
-
+<br>
 <form method="POST" id="food-form">
-    <label for="saved-foods">Choose saved food (optional):</label>
-    <select id="saved-foods" name="saved_food" onchange="fillMacros()">
-        <option value="">-- Select Saved Food --</option>
-        {% for food in saved_foods %}
-            <option value="{{ food[1] }}">{{ food[1] }}</option>  <!-- assuming food[1] is name -->
-        {% endfor %}
-    </select><br><br>
+  <label for="food-search">Search saved food (optional):</label>
+  <input type="text" id="food-search" name="saved_food"
+     autocomplete="off"
+     style="width: 100%; padding: 8px;"
+     oninput="searchSavedFoods()"
+     onfocus="searchSavedFoods()" />
+  <div id="suggestions" style="
+      border: 1px solid #ccc;
+      display: none;
+      position: absolute;
+      background: white;
+      z-index: 1000;
+      max-height: 300px;
+      overflow-y: auto;
+      width: 100%;
+  "></div>
+  <br>
   <label for="name">Name:</label><br>
-  <input type="text" name="name" id="name" required><br><br>
-
+  <input type="text" name="name" id="name" required>
+  <br>
   <div class="macros-row">
     <div class="macro-input">
-      <label for="calories">Calories:</label><br>
+      <label for="calories">Calories:</label>
+      <br>
       <input type="number" name="calories" id="calories" step="1" required>
     </div>
     <div class="macro-input">
-      <label for="protein">Protein (g):</label><br>
+      <label for="protein">Protein (g):</label>
+      <br>
       <input type="number" name="protein" id="protein" step="0.1">
     </div>
     <div class="macro-input">
-      <label for="carbs">Carbs (g):</label><br>
+      <label for="carbs">Carbs (g):</label>
+      <br>
       <input type="number" name="carbs" id="carbs" step="0.1">
     </div>
     <div class="macro-input">
-      <label for="fat">Fat (g):</label><br>
+      <label for="fat">Fat (g):</label>
+      <br>
       <input type="number" name="fat" id="fat" step="0.1">
     </div>
   </div>
-
   <br>
   <button type="submit">Log Food</button>
 </form>
-
 <hr>
-
 <h3>Logged Foods</h3>
 <div class="table-container">
     <table>
@@ -75,17 +83,13 @@
             <td>
                 <a href="{{ url_for('edit_food', food_id=entry[0]) }}">Edit</a>
                 <a href="#" onclick="if(confirm('Delete this entry?')) { document.getElementById('delete-form-{{ entry[0] }}').submit(); } return false;">Delete</a>
-
                 <form id="delete-form-{{ entry[0] }}" method="POST" action="{{ url_for('delete_food', food_id=entry[0]) }}" style="display:none;"></form>
-
             </td>
         </tr>
         {% endfor %}
     </table>
 </div>
-
 <hr>
-
 <h3>Daily Totals</h3>
 <div class="totals">
   {% for key, label in [('calories', 'Calories'), ('protein', 'Protein (g)'), ('carbs', 'Carbs (g)'), ('fat', 'Fat (g)')] %}
@@ -100,22 +104,17 @@
     </div>
   {% endfor %}
 </div>
-
-
 <script>
     const savedFoods = {
         {% for food in saved_foods %}
         "{{ food[1] }}": {},  // fix: use food[1] for name key
         {% endfor %}
     };
-
     async function fillMacros() {
         const selected = document.getElementById('saved-foods').value;
         if (!selected) return;
-
         const response = await fetch(`/api/saved-food/${encodeURIComponent(selected)}`);
         if (!response.ok) return;
-
         const data = await response.json();
         document.getElementById('name').value = selected;
         document.getElementById('calories').value = data.calories;
@@ -123,32 +122,61 @@
         document.getElementById('carbs').value = data.carbs;
         document.getElementById('fat').value = data.fat;
     }
+  document.getElementById('food-form').addEventListener('submit', function(e) {
+    const name = this.name.value.trim();
+    const calories = parseFloat(this.calories.value);
+    const protein = parseFloat(this.protein.value || 0);
+    const carbs = parseFloat(this.carbs.value || 0);
+    const fat = parseFloat(this.fat.value || 0);
+    if (!name) {
+      alert("Food name is required.");
+      e.preventDefault();
+      return;
+    }
+    if (isNaN(calories) || calories <= 0) {
+      alert("Calories must be a positive number.");
+      e.preventDefault();
+      return;
+    }
+    if (protein < 0 || carbs < 0 || fat < 0) {
+      alert("Macros cannot be negative.");
+      e.preventDefault();
+      return;
+    }
+  });
+  async function searchSavedFoods() {
+      const query = document.getElementById("food-search").value.trim();
+      const suggestions = document.getElementById("suggestions");
+      const res = await fetch(`/api/saved-food-search?q=${encodeURIComponent(query)}`);
+      if (!res.ok) return;
+      const results = await res.json();
+      suggestions.innerHTML = "";
+      if (results.length > 0) {
+          results.forEach(food => {
+              const div = document.createElement("div");
+              div.textContent = food.name;
+              div.style.padding = "8px";
+              div.style.cursor = "pointer";
+              div.addEventListener("click", () => {
+                  document.getElementById("food-search").value = food.name;
+                  suggestions.innerHTML = "";
+                  suggestions.style.display = "none";
+                  fillMacros(food.name);
+              });
+              suggestions.appendChild(div);
+          });
+          suggestions.style.display = "block";
+      } else {
+          suggestions.style.display = "none";
+      }
+  }
+  // Hide dropdown when clicking outside
+  document.addEventListener("click", function (e) {
+      const suggestions = document.getElementById("suggestions");
+      const input = document.getElementById("food-search");
+      if (!suggestions.contains(e.target) && e.target !== input) {
+          suggestions.style.display = "none";
+      }
+  });
 </script>
-
-<script>
-document.getElementById('food-form').addEventListener('submit', function(e) {
-  const name = this.name.value.trim();
-  const calories = parseFloat(this.calories.value);
-  const protein = parseFloat(this.protein.value || 0);
-  const carbs = parseFloat(this.carbs.value || 0);
-  const fat = parseFloat(this.fat.value || 0);
-
-  if (!name) {
-    alert("Food name is required.");
-    e.preventDefault();
-    return;
-  }
-  if (isNaN(calories) || calories <= 0) {
-    alert("Calories must be a positive number.");
-    e.preventDefault();
-    return;
-  }
-  if (protein < 0 || carbs < 0 || fat < 0) {
-    alert("Macros cannot be negative.");
-    e.preventDefault();
-    return;
-  }
-});
-</script>
-
 {% endblock %}
