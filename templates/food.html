@@ -22,21 +22,23 @@
 <br>
 <form method="POST" id="food-form">
   <label for="food-search">Search saved food (optional):</label>
-  <input type="text" id="food-search" name="saved_food"
-     autocomplete="off"
-     style="width: 100%; padding: 8px;"
-     oninput="searchSavedFoods()"
-     onfocus="searchSavedFoods()" />
-  <div id="suggestions" style="
-      border: 1px solid #ccc;
-      display: none;
-      position: absolute;
-      background: white;
-      z-index: 1000;
-      max-height: 300px;
-      overflow-y: auto;
-      width: 100%;
-  "></div>
+  <div style="position: relative; width: 100%;">
+      <input type="text" id="food-search" name="saved_food"
+         autocomplete="off"
+         style="width: 100%; padding: 8px;"
+         oninput="searchSavedFoods()"
+         onfocus="searchSavedFoods()" />
+      <div id="suggestions" style="
+          border: 1px solid #ccc;
+          display: none;
+          position: absolute;
+          background: white;
+          z-index: 1000;
+          max-height: 300px;
+          overflow-y: auto;
+          width: 100%;
+      "></div>
+  </div>
   <br><br>
   <label for="name">Name:</label><br>
   <input type="text" name="name" id="name" required>
@@ -158,10 +160,21 @@
               div.style.padding = "8px";
               div.style.cursor = "pointer";
               div.addEventListener("click", () => {
-                  document.getElementById("food-search").value = food.name;
+                  const foodName = food.name;
+                  document.getElementById("food-search").value = foodName;
                   suggestions.innerHTML = "";
                   suggestions.style.display = "none";
-                  fillMacros(food.name);
+
+                  // Fill macro input boxes directly using the food name
+                  fetch(`/api/saved-food/${encodeURIComponent(foodName)}`)
+                      .then(res => res.json())
+                      .then(data => {
+                          document.getElementById("name").value = foodName;
+                          document.getElementById("calories").value = data.calories;
+                          document.getElementById("protein").value = data.protein;
+                          document.getElementById("carbs").value = data.carbs;
+                          document.getElementById("fat").value = data.fat;
+                      });
               });
               suggestions.appendChild(div);
           });
