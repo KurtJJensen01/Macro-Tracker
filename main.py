@@ -129,7 +129,7 @@ def edit_food(food_id):
             return render_template("edit_food.html", food_id=food_id, food=food)
 
 
-@app.route("/api/saved-food/<name>")
+@app.route("/api/saved-food/<path:name>")
 def get_saved_food(name):
     with sqlite3.connect(DB_NAME) as conn:
         cur = conn.cursor()
