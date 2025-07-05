@@ -245,7 +245,7 @@ def settings():
 
         with sqlite3.connect(DB_NAME) as conn:
             cur = conn.cursor()
-            cur.execute("DELETE FROM tdee_settings")
+            #cur.execute("DELETE FROM tdee_settings")
             cur.execute("INSERT INTO tdee_settings (tdee, goal, last_updated) VALUES (?, ?, ?)", (tdee, goal, now))
             conn.commit()
 
